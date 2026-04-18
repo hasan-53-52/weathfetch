@@ -1,235 +1,158 @@
-# ⛅ WeathFetch
+# WeathFetch
 
-A production-ready Weather Forecast Application built with **React.js** (frontend) and **Node.js + Express** (backend), proxying the **OpenWeatherMap API** securely.
+A weather forecast web app built with React and Node.js. It pulls real-time data from the OpenWeatherMap API through a backend proxy so the API key never touches the frontend.
+
+## What it does
+
+Search any city and get current weather, a 5-day forecast, and a 24-hour hourly breakdown. Supports live location detection, °C/°F toggle, and city autocomplete.
 
 ---
 
-## 🗂 Project Structure
+## Tech Stack
+
+- **Frontend** — React.js
+- **Backend** — Node.js + Express
+- **API** — OpenWeatherMap
+- **Caching** — node-cache (10 min TTL, reduces redundant API calls)
+- **Security** — API key lives on the server only, rate limiting enabled
+
+---
+
+## Project Structure
 
 ```
 weathfetch/
-├── backend/                    # Node.js + Express API proxy
-│   ├── cache/
-│   │   └── weatherCache.js     # In-memory caching (node-cache)
-│   ├── middleware/
-│   │   └── errorHandler.js     # Centralized error handling
-│   ├── routes/
-│   │   └── weather.js          # /api/weather/* endpoints
-│   ├── server.js               # Express entry point
-│   ├── .env.example            # Environment variable template
-│   ├── Dockerfile
+├── backend/
+│   ├── cache/weatherCache.js
+│   ├── middleware/errorHandler.js
+│   ├── routes/weather.js
+│   ├── server.js
+│   ├── .env.example
 │   └── package.json
-│
-├── frontend/                   # React.js SPA
-│   ├── public/
-│   │   └── index.html
+├── frontend/
+│   ├── public/index.html
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── SearchBar.jsx       # City search + autocomplete
-│   │   │   ├── CurrentWeather.jsx  # Current conditions card
-│   │   │   ├── ForecastCard.jsx    # 5-day + 24-hour forecast
-│   │   │   ├── ErrorBanner.jsx     # Error display
-│   │   │   └── LoadingSpinner.jsx  # Loading state
-│   │   ├── hooks/
-│   │   │   └── useWeather.js       # Custom hook — all data logic
-│   │   ├── utils/
-│   │   │   ├── api.js              # Axios client wrapper
-│   │   │   └── weatherHelpers.js   # Formatters, icons, conversions
-│   │   ├── App.jsx                 # Root component
-│   │   ├── index.css               # Global styles (black/red theme)
-│   │   └── index.js                # React DOM entry
+│   │   │   ├── CurrentWeather.jsx
+│   │   │   ├── ForecastCard.jsx
+│   │   │   ├── SearchBar.jsx
+│   │   │   ├── ErrorBanner.jsx
+│   │   │   └── LoadingSpinner.jsx
+│   │   ├── hooks/useWeather.js
+│   │   ├── utils/api.js
+│   │   ├── utils/weatherHelpers.js
+│   │   ├── App.jsx
+│   │   └── index.css
 │   ├── .env.example
-│   ├── Dockerfile
 │   └── package.json
-│
-├── docker-compose.yml          # Full-stack Docker orchestration
-├── .gitignore
+├── start-backend.bat
+├── start-frontend.bat
 └── README.md
 ```
 
 ---
 
-## 🚀 Quick Start
+## Getting Started
 
-### Prerequisites
-- Node.js 18+
-- An [OpenWeatherMap API key](https://openweathermap.org/api) (free tier works)
+### 1. Get an API Key
 
----
+Sign up for a free account at [openweathermap.org](https://openweathermap.org/api) and grab your API key. New keys take about 10–30 minutes to activate.
 
-### 1. Clone & Configure
-
-```bash
-git clone <your-repo-url>
-cd weathfetch
-```
-
-**Backend environment:**
-```bash
-cd backend
-cp .env.example .env
-# Edit .env and add your OPENWEATHER_API_KEY
-```
-
-**Frontend environment:**
-```bash
-cd ../frontend
-cp .env.example .env
-# REACT_APP_API_URL should point to your backend
-```
-
----
-
-### 2. Run Backend
+### 2. Set Up the Backend
 
 ```bash
 cd backend
 npm install
-npm run dev       # development (nodemon)
-# or
-npm start         # production
 ```
 
-The API server starts at **http://localhost:5000**
+Rename `.env.example` to `.env` and add your API key:
 
----
+```
+OPENWEATHER_API_KEY=your_key_here
+```
 
-### 3. Run Frontend
+Start the backend:
+
+```bash
+npm run dev
+```
+
+It runs on `http://localhost:5000`.
+
+### 3. Set Up the Frontend
+
+Open a second terminal:
 
 ```bash
 cd frontend
 npm install
+```
+
+Rename `.env.example` to `.env`. The defaults work fine:
+
+```
+REACT_APP_API_URL=http://localhost:5000/api
+```
+
+Start the frontend:
+
+```bash
 npm start
 ```
 
-The React app opens at **http://localhost:3000**
+Opens at `http://localhost:3000`.
+
+Both terminals need to stay open while using the app.
 
 ---
 
-### 4. Run with Docker (Full Stack)
+## Quick Start (Windows)
 
-```bash
-# From the project root
-cp backend/.env.example backend/.env
-# Add your API key to backend/.env
+Two `.bat` files are included so you don't have to type commands every time.
 
-docker-compose up --build
-```
+Just place them in the root `weathfetch/` folder (they're already there) and double-click:
 
-- Frontend → http://localhost:3000  
-- Backend  → http://localhost:5000
+- `start-backend.bat` — starts the backend server
+- `start-frontend.bat` — starts the React app
+
+Always start the backend first, then the frontend.
 
 ---
 
-## 🔌 API Endpoints
-
-All endpoints are prefixed with `/api/weather`.
+## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/current?city=London&units=metric` | Current weather by city |
-| GET | `/current?lat=51.5&lon=-0.12&units=metric` | Current weather by coordinates |
-| GET | `/forecast?city=London&units=metric&days=5` | 5-day forecast |
-| GET | `/forecast?lat=51.5&lon=-0.12` | Forecast by coordinates |
-| GET | `/search?q=Lon` | City autocomplete (top 5) |
-| GET | `/cache/stats` | Cache statistics |
-| DELETE | `/cache` | Flush all cache entries |
+| GET | `/api/weather/current?city=London` | Current weather |
+| GET | `/api/weather/forecast?city=London` | 5-day forecast |
+| GET | `/api/weather/search?q=Lon` | City autocomplete |
 
-**Units:** `metric` (°C, m/s) · `imperial` (°F, mph) · `standard` (K)
+Supports `units=metric` (°C) or `units=imperial` (°F).
 
 ---
 
-## ⚙️ Environment Variables
-
-### Backend (`backend/.env`)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `5000` | Express server port |
-| `NODE_ENV` | `development` | Environment mode |
-| `OPENWEATHER_API_KEY` | — | **Required.** Your OWM API key |
-| `OPENWEATHER_BASE_URL` | OWM v2.5 URL | Base API URL |
-| `FRONTEND_URL` | `http://localhost:3000` | CORS allowed origin |
-| `CACHE_TTL` | `600` | Cache expiry in seconds |
-| `CACHE_MAX_KEYS` | `500` | Max cached entries |
-| `RATE_LIMIT_WINDOW_MS` | `900000` | Rate limit window (15 min) |
-| `RATE_LIMIT_MAX` | `100` | Max requests per window |
-
-### Frontend (`frontend/.env`)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `REACT_APP_API_URL` | `http://localhost:5000/api` | Backend base URL |
-| `REACT_APP_DEFAULT_UNITS` | `metric` | Default temperature units |
-| `REACT_APP_NAME` | `WeathFetch` | App display name |
-
----
-
-## 🏗 Architecture
-
-```
-Browser (React)
-     │
-     │  HTTP requests to /api/*
-     ▼
-Express Backend (Node.js)          ← API key stays here, never exposed
-     │  ├── Rate Limiter
-     │  ├── CORS Guard
-     │  ├── Cache Layer (node-cache)
-     │  └── Error Handler
-     │
-     │  HTTPS to OpenWeatherMap
-     ▼
-OpenWeatherMap API
-```
-
-**Key design decisions:**
-- **API key is server-side only** — the frontend never touches it
-- **Cache-first strategy** — repeated queries for the same city are served from memory (600s TTL)
-- **Parallel fetching** — current weather + forecast are fetched simultaneously with `Promise.all`
-- **Debounced search** — city autocomplete fires after 350ms idle
-- **Geolocation support** — one-click "use my location" via browser Geolocation API
-
----
-
-## 🎨 Design
-
-- **Theme:** Deep black + crimson red
-- **Fonts:** Bebas Neue (display) · DM Sans (body) · JetBrains Mono (data)
-- **Dynamic background:** Gradient shifts based on weather condition
-- **Responsive:** Works on mobile, tablet, and desktop
-
----
-
-## 📦 Dependencies
+## Environment Variables
 
 ### Backend
-| Package | Purpose |
-|---------|---------|
-| `express` | HTTP server |
-| `axios` | OpenWeatherMap API calls |
-| `cors` | Cross-origin request control |
-| `dotenv` | Environment config |
-| `node-cache` | In-memory response caching |
-| `express-rate-limit` | Abuse prevention |
+
+| Variable | Description |
+|----------|-------------|
+| `OPENWEATHER_API_KEY` | Your OpenWeatherMap key |
+| `PORT` | Server port (default: 5000) |
+| `FRONTEND_URL` | Allowed CORS origin |
+| `CACHE_TTL` | Cache duration in seconds (default: 600) |
 
 ### Frontend
-| Package | Purpose |
-|---------|---------|
-| `react` / `react-dom` | UI framework |
-| `axios` | Backend API calls |
+
+| Variable | Description |
+|----------|-------------|
+| `REACT_APP_API_URL` | Backend URL |
+| `REACT_APP_DEFAULT_UNITS` | `metric` or `imperial` |
 
 ---
 
-## 🔒 Security Notes
+## Notes
 
-- API key is stored in backend `.env` — **never committed to git**
-- CORS is restricted to the frontend origin only
-- Rate limiting prevents API abuse
-- No sensitive data is ever sent to the client
-
----
-
-## 📄 License
-
-MIT — free to use, modify, and distribute.
+- The `.env` file is blocked by `.gitignore` — your API key won't be pushed to GitHub
+- `.env.example` is safe to commit — it's just a template with no real values
+- Anyone cloning this repo needs to create their own `.env` with their own API key
